@@ -1,24 +1,50 @@
-
+import { Todo } from './types';
 import './App.css';
 import TodoItem from './components/TodoItem';
 import NewTodoForm from './components/NewTodoForm';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import TodoList from './components/TodoList';
 
 function App() {
-  const [text, setText] = useState('')
-  const [todos, setTodos] = useState<string[]>([])
+  const [todos, setTodos] = useState<Todo[]>([])
 
-  const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setText(event.target.value)
+  const toggleTodo = (id: Todo['id']) => {
+    setTodos(todos.map(todo => {
+      if (todo.id !== id) {
+        return todo
+      }
+      return {
+        ...todo,
+        completed: !todo.completed
+      }
+    }))
   }
-  const addTodo = () => {
-    setTodos([text, ...todos])
-    setText('')
+
+  const removeTodo = (id: Todo['id']) => {
+    setTodos(todos.filter(todo => todo.id !== id))
   }
+
+  useEffect(() => {
+    fetch('https://jsonplaceholder.typicode.com/todos')
+      .then(res => res.json())
+      .then((data: Todo[]) => { setTodos(data) })
+  }, [])
+
+
+  const addTodo = (text: string) => {
+    const newTodo = {
+      id: Date.now(),
+      title: text,
+      completed: false
+    }
+    setTodos([newTodo, ...todos])
+  }
+
+
   return (
     <div className="App">
-      <NewTodoForm value={text} onChange={handleInput} handleClick={addTodo} />
-      <TodoItem id='123' completed={false} title='first todo' style={{ border: '1px solid black' }} />
+      <NewTodoForm handleClick={addTodo} />
+      <TodoList todos={todos} removeTodo={removeTodo} toggleTodo={toggleTodo} />
     </div>
   );
 }
